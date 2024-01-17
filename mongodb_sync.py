@@ -57,6 +57,13 @@ class MongodbSyncConfig():
                             logger.info(f"find src db.collection: {db}.{col}")
                             self.src_db_cols.append(f"{db}.{col}")
 
+        db_col_exclude = sync_conf.get("db_col_exclude", None)
+        if db_col_exclude:
+            db_col_exclude_list = db_col_exclude.split(',')
+            for db_col_exclude_item in db_col_exclude_list:
+                if db_col_exclude_item in self.src_db_cols:
+                    logger.info(f"find exclude src db.collection: {db_col_exclude_item}")
+                    self.src_db_cols.remove(db_col_exclude_item)
 
         db_transform = sync_conf.get("db_transform", None)
         col_transform = sync_conf.get("col_transform", None)
@@ -294,11 +301,16 @@ class MongodbSyncer():
 if __name__ == '__main__':
     sync_config = {
         # mongodb uri
+        # 如果密码中包含特殊字符请使用转义
+        # from urllib.parse import quote_plus
+        # pass = quote_plus("pass")
         "src": "mongodb://127.0.0.1:27017/",
         "dst": "mongodb://127.0.0.1:27017/",
         # db_col_filter example: "dbA.*, dbB.logs, dbC.col_profix_*"; 支持填多个, 使用逗号分割; "*.*"表示同步所有,
         #  如果需要精确匹配请使用正则, 比如 dbA.logs$
-        "db_col_filter": "test.*",
+        "db_col_filter": "cmdb.*",
+        # 支持exclude, 不支持正则, 格式为db.col, 使用,分割
+        "db_col_exclude": "cmdb.monitorData",
         # query_filter in dict format, 支持标准pymongo查询
         # example1:  "query_filter": {"user_name": "aaa"},
         # example2: query_filter: { "field_name": { "$regex": f".*-test", "$options": "i" } }
